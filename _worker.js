@@ -2,14 +2,14 @@ import { connect } from 'cloudflare:sockets';
 
 let userID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
 
-const PoxyIPs = ['cdn.xn--b6gac.eu.org', 'cdn-all.xn--b6gac.eu.org', 'workers.cloudflare.cyou'];
+const ProxyIPs = ['cdn.xn--b6gac.eu.org', 'cdn-all.xn--b6gac.eu.org', 'workers.cloudflare.cyou'];
 
-// if you want to use ipv6 or single PoxyIP, please add comment at this line and remove comment at the next line
-let PoxyIP = PoxyIPs[Math.floor(Math.random() * PoxyIPs.length)];
-// use single PoxyIP instead of random
-// let PoxyIP = 'cdn.xn--b6gac.eu.org';
-// ipv6 PoxyIP example remove comment to use
-// let PoxyIP = "[2a01:4f8:c2c:123f:64:5:6810:c55a]"
+// if you want to use ipv6 or single ProxyIP, please add comment at this line and remove comment at the next line
+let ProxyIP = ProxyIPs[Math.floor(Math.random() * ProxyIPs.length)];
+// use single ProxyIP instead of random
+// let ProxyIP = 'cdn.xn--b6gac.eu.org';
+// ipv6 ProxyIP example remove comment to use
+// let ProxyIP = "[2a01:4f8:c2c:123f:64:5:6810:c55a]"
 
 let dohURL = 'https://sky.rethinkdns.com/1:-Pf_____9_8A_AMAIgE8kMABVDDmKOHTAKg='; // https://cloudflare-dns.com/dns-query or https://dns.google/dns-query
 
@@ -20,7 +20,7 @@ if (!isValidUUID(userID)) {
 export default {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
-	 * @param {{UUID: string, PoxyIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
+	 * @param {{UUID: string, ProxyIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
 	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
 	 * @returns {Promise<Response>}
 	 */
@@ -28,7 +28,7 @@ export default {
 		// uuid_validator(request);
 		try {
 			userID = env.UUID || userID;
-			PoxyIP = env.PROXYIP || PoxyIP;
+			ProxyIP = env.PROXYIP || ProxyIP;
 			dohURL = env.DNS_RESOLVER_URL || dohURL;
 			let userID_Path = userID;
 			if (userID.includes(',')) {
@@ -271,7 +271,7 @@ async function handleTCPOutBound(remoteSocket, addressRemote, portRemote, rawCli
 	 * @returns {Promise<void>} A Promise that resolves when the retry is complete.
 	 */
 	async function retry() {
-		const tcpSocket = await connectAndWrite(PoxyIP || addressRemote, portRemote)
+		const tcpSocket = await connectAndWrite(ProxyIP || addressRemote, portRemote)
 		tcpSocket.closed.catch(error => {
 			console.log('retry tcpSocket closed error', error);
 		}).finally(() => {
@@ -679,7 +679,7 @@ function getVLessConfig(userIDs, hostName) {
 	// Prepare output string for each userID
 	const output = userIDArray.map((userID) => {
 		const VLessMain = atob(pt) + '://' + userID + atob(at) + hostName + commonUrlPart;
-		const VLessSec = atob(pt) + '://' + userID + atob(at) + PoxyIP + commonUrlPart;
+		const VLessSec = atob(pt) + '://' + userID + atob(at) + ProxyIP + commonUrlPart;
 		return `<h2>UUID: ${userID}</h2>${hashSeparator}\nv2ray default ip
 ---------------------------------------------------------------
 ${VLessMain}
@@ -814,8 +814,8 @@ function BuildVLessSub(userID_Path, Hostname) {
 			if (!Hostname.includes('pages.dev')) {
 				const PartUrl = `${Hostname}-HTTP-${Port}`;
 				const VLessMainHttp = atob(pt) + '://' + userID + atob(at) + Hostname + ':' + Port + PartUrlGeneralHttp + PartUrl;
-				return PoxyIPs.flatMap((PoxyIP) => {
-					const VLessSecondaryHttp = atob(pt) + '://' + userID + atob(at) + PoxyIP + ':' + Port + PartUrlGeneralHttp + PartUrl + '-' + PoxyIP + '-' + atob(ed);
+				return ProxyIPs.flatMap((ProxyIP) => {
+					const VLessSecondaryHttp = atob(pt) + '://' + userID + atob(at) + ProxyIP + ':' + Port + PartUrlGeneralHttp + PartUrl + '-' + ProxyIP + '-' + atob(ed);
 					return [VLessMainHttp, VLessSecondaryHttp];
 				});
 			}
@@ -825,8 +825,8 @@ function BuildVLessSub(userID_Path, Hostname) {
 		const ConfigurationHttps = Array.from(SetPortHttps).flatMap((Port) => {
 			const PartUrl = `${Hostname}-HTTPS-${Port}`;
 			const VLessMainHttps = atob(pt) + '://' + userID + atob(at) + Hostname + ':' + Port + PartUrlGeneralHttps + PartUrl;
-			return PoxyIPs.flatMap((PoxyIP) => {
-				const VLessSecondaryHttps = atob(pt) + '://' + userID + atob(at) + PoxyIP + ':' + Port + PartUrlGeneralHttps + PartUrl + '-' + PoxyIP + '-' + atob(ed);
+			return ProxyIPs.flatMap((ProxyIP) => {
+				const VLessSecondaryHttps = atob(pt) + '://' + userID + atob(at) + ProxyIP + ':' + Port + PartUrlGeneralHttps + PartUrl + '-' + ProxyIP + '-' + atob(ed);
 				return [VLessMainHttps, VLessSecondaryHttps];
 			});
 		});
