@@ -1,31 +1,35 @@
 import { connect } from 'cloudflare:sockets';
-
 let userID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
-
 const ProxyIPs = ['cdn.xn--b6gac.eu.org', 'cdn-all.xn--b6gac.eu.org', 'workers.cloudflare.cyou'];
-
-// if you want to use ipv6 or single ProxyIP, please add comment at this line and remove comment at the next line
 let ProxyIP = ProxyIPs[Math.floor(Math.random() * ProxyIPs.length)];
-// use single ProxyIP instead of random
-// let ProxyIP = 'cdn.xn--b6gac.eu.org';
-// ipv6 ProxyIP example remove comment to use
-// let ProxyIP = "[2a01:4f8:c2c:123f:64:5:6810:c55a]"
+addEventListener('fetch', event => {
+    event.respondWith(handleRequest(event.request));
+});
 
-let dohURL = 'https://sky.rethinkdns.com/1:-Pf_____9_8A_AMAIgE8kMABVDDmKOHTAKg='; // https://cloudflare-dns.com/dns-query or https://dns.google/dns-query
+async function handleRequest(request) {
+    try {
+        let dohURL = new URL(request.url);
+        dohURL.protocol = 'https:';
+        dohURL.hostname = 'cloudflare-dns.com';
+        dohURL.pathname = '/dns-query';
+        
+        let userID = request.headers.get('user-id');
+        if (!isValidUUID(userID)) {
+            throw new Error('uuid is invalid');
+        }
 
-if (!isValidUUID(userID)) {
-	throw new Error('uuid is invalid');
+        let newRequest = new Request(dohURL, request);
+        let response = await fetch(newRequest);
+        
+        return response;
+    } catch (error) {
+        console.error('Error:', error);
+        return new Response('An error occurred', { status: 500 });
+    }
 }
 
 export default {
-	/**
-	 * @param {import("@cloudflare/workers-types").Request} request
-	 * @param {{UUID: string, ProxyIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
-	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
-	 * @returns {Promise<Response>}
-	 */
 	async fetch(request, env, ctx) {
-		// uuid_validator(request);
 		try {
 			userID = env.UUID || userID;
 			ProxyIP = env.PROXYIP || ProxyIP;
